@@ -149,7 +149,7 @@ body {
 }
 
 .bg-linkcard {
-  background-color: color-mix(in oklab, var(--input) 30%, transparent);
+  background-color: color-mix(in oklab, var(--input) 20%, transparent);
   transition: background-color 0.2s;
 
   &:hover {

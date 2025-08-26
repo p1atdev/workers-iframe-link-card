@@ -55,7 +55,7 @@ app.get("/embed", async (c) => {
             "min-w-0 w-full h-full py-5 flex flex-col justify-between px-6"
           }
         >
-          <h1 class={"text-lg leading-[1.1] font-semibold"}>
+          <h1 class={"text-lg leading-[1.1] line-clamp-2 font-semibold"}>
             {raw(ogp.title ?? "")}
           </h1>
           <p class={"text-sm truncate text-secondary w-full"}>

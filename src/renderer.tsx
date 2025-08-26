@@ -11,7 +11,7 @@ export const renderer = jsxRenderer(({ children }) => {
       </head>
       <body>
         {children}
-        <script src="/src/load-theme.js"></script>
+        <script src="/load-theme.js"></script>
       </body>
     </html>
   );

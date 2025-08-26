@@ -45,19 +45,24 @@ app.get("/embed", async (c) => {
     const ogp = await getCachedOGP(decodeURIComponent(url), c.env.OGP_CACHE);
 
     return c.render(
-      <div class={"flex max-h-screen w-full h-full rounded-xl tracking-tight"}>
+      <div
+        class={
+          "flex h-screen w-full max-h-40 rounded-xl tracking-tight group bg-linkcard"
+        }
+      >
         <div
           class={
-            "min-w-0 w-full h-full py-6 flex flex-col gap-y-1 justify-between px-4"
+            "min-w-0 w-full h-full py-5 flex flex-col justify-between px-6"
           }
         >
-          <h1 class={"text-xl font-semibold"}>{raw(ogp.title ?? "")}</h1>
+          <h1 class={"text-lg leading-[1.1] font-semibold"}>
+            {raw(ogp.title ?? "")}
+          </h1>
           <p class={"text-sm truncate text-secondary w-full"}>
             {raw(ogp.description ?? "")}
           </p>
 
-          {/* <p class={"text-sm w-full"}>{raw(ogp.siteName ?? "")}</p> */}
-          <p class={"text-sm text-foreground/50"}>{ogp.url ?? ""}</p>
+          <p class={"text-sm group-hover:underline"}>{ogp.url ?? ""}</p>
         </div>
 
         {ogp.image && (

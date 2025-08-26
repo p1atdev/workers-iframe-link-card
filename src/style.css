@@ -147,3 +147,12 @@ body {
 .text-secondary {
   color: var(--muted-foreground);
 }
+
+.bg-linkcard {
+  background-color: color-mix(in oklab, var(--input) 30%, transparent);
+  transition: background-color 0.2s;
+
+  &:hover {
+    background-color: color-mix(in oklab, var(--input) 50%, transparent);
+  }
+}

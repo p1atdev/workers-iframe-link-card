@@ -102,7 +102,7 @@ export async function getOGP(url: string): Promise<OGPData> {
 
   // https://github.com/oven-sh/bun/issues/4408#issuecomment-1736976282
   const _res = new HTMLRewriter().on("meta, link", ogpParser).transform(res);
-  await _res.text();
+  console.log(await _res.text());
 
   // パースしたものを取得
   const ogp = ogpParser.ogp;

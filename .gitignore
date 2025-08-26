@@ -32,3 +32,6 @@ lerna-debug.log*
 
 # misc
 .DS_Store
+
+# ignore worker-configuration
+worker-configuration.d.ts

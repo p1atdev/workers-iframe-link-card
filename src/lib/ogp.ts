@@ -64,6 +64,7 @@ class OGPParser {
   }
 
   element(element: Element) {
+    console.log(element);
     const tagName = element.tagName.toLowerCase();
 
     switch (tagName) {

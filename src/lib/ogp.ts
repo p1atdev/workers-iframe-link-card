@@ -53,15 +53,13 @@ class OGPParser {
   }
 
   link(element: Element) {
-    const rel = element.getAttribute("rel");
+    const rel = element.getAttribute("rel") ?? "";
     const href = element.getAttribute("href");
 
-    switch (rel) {
-      case "icon":
-      case "shortcut icon": {
-        this.ogp.favicon = new URL(href || "", this.origin).href;
-        break;
-      }
+    const rels = rel.split(" ").map((r) => r.toLowerCase());
+
+    if (rels.includes("icon")) {
+      this.ogp.favicon = new URL(href || "", this.origin).href;
     }
   }
 

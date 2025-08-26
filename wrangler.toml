@@ -1,0 +1,12 @@
+name = "iframe-link-card"
+compatibility_date = "2025-07-28"
+compatibility_flags = ["nodejs_compat"]
+
+main = "./src/index.tsx"
+
+[observability]
+enabled = true
+
+[[kv_namespaces]]
+binding = "OGP_CACHE"
+id = "3bd861de65c94b93819c84a9fb6847e8"

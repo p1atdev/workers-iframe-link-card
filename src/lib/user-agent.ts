@@ -1,6 +1,5 @@
 export const UserAgentForWebsites = {
-  youtube:
-    "facebookexternalhit/1.1 (+http://www.facebook.com/externalhit_uatext.php)",
+  youtube: "facebookexternalhit/1.1 (+http://www.facebook.com/externalhit_uatext.php)",
 };
 const yourubeHosts = [
   "youtube.com",

@@ -11,10 +11,7 @@ const app = new Hono<{
   Bindings: Bindings;
 }>();
 
-const getCachedOGP = async (
-  url: string,
-  cache: KVNamespace
-): Promise<OGPData> => {
+const getCachedOGP = async (url: string, cache: KVNamespace): Promise<OGPData> => {
   const cached = await cache.get(url, "json");
   if (cached) {
     return cached as OGPData;
@@ -45,22 +42,10 @@ app.get("/embed", async (c) => {
     const ogp = await getCachedOGP(decodeURIComponent(url), c.env.OGP_CACHE);
 
     return c.render(
-      <div
-        class={
-          "flex h-screen w-full max-h-40 rounded-xl tracking-tight group bg-linkcard"
-        }
-      >
-        <div
-          class={
-            "min-w-0 w-full h-full py-5 flex flex-col justify-between px-6"
-          }
-        >
-          <h1 class={"text-lg leading-[1.1] line-clamp-2 font-semibold"}>
-            {raw(ogp.title ?? "")}
-          </h1>
-          <p class={"text-sm truncate text-secondary w-full"}>
-            {raw(ogp.description ?? "")}
-          </p>
+      <div class={"flex h-screen w-full max-h-40 rounded-xl tracking-tight group bg-linkcard"}>
+        <div class={"min-w-0 w-full h-full py-5 flex flex-col justify-between px-6"}>
+          <h1 class={"text-lg leading-[1.1] line-clamp-2 font-semibold"}>{raw(ogp.title ?? "")}</h1>
+          <p class={"text-sm truncate text-secondary w-full"}>{raw(ogp.description ?? "")}</p>
 
           <p class={"text-sm group-hover:underline"}>{ogp.url ?? ""}</p>
         </div>
@@ -74,24 +59,19 @@ app.get("/embed", async (c) => {
             />
           </div>
         )}
-      </div>
+      </div>,
     );
   } catch (error) {
-    const message =
-      error instanceof Error ? error.message : "An error occurred";
+    const message = error instanceof Error ? error.message : "An error occurred";
 
     return c.render(
-      <div
-        class={
-          "flex w-full justify-between gap-6 rounded-xl shadow-sm tracking-tight "
-        }
-      >
+      <div class={"flex w-full justify-between gap-6 rounded-xl shadow-sm tracking-tight "}>
         <div class={"grow min-w-80 py-6 flex flex-col gap-2 px-4"}>
           <h1 class={"text-xl font-semibold"}>{message}</h1>
           <p class={"text-sm"}>Please check the URL and try again.</p>
           <p class={"text-sm"}>url={url}</p>
         </div>
-      </div>
+      </div>,
     );
   }
 });

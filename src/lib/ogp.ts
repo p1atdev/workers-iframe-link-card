@@ -65,7 +65,7 @@ class OGPParser {
 
   element(element: Element) {
     const tagName = element.tagName.toLowerCase();
-    console.log(tagName, JSON.stringify(element.attributes, null, 2));
+    console.log(tagName, element.attributes);
 
     switch (tagName) {
       case "meta": {

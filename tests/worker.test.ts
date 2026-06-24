@@ -82,6 +82,11 @@ describe("User-Agent selection", () => {
     expect(getDynamicUserAgent("www.youtube.com")).toBe(UserAgentForWebsites.youtube);
     expect(getDynamicUserAgent("youtu.be")).toBe(UserAgentForWebsites.youtube);
   });
+
+  it("uses Slackbot UA for Platesmania hosts", () => {
+    expect(getDynamicUserAgent("platesmania.com")).toBe(UserAgentForWebsites.platesmania);
+    expect(getDynamicUserAgent("fr.platesmania.com")).toBe(UserAgentForWebsites.platesmania);
+  });
 });
 
 describe("/embed", () => {
@@ -139,6 +144,129 @@ describe("/embed", () => {
     });
     expect(requests.map(({ method, url }) => `${method} ${url}`)).toEqual([
       `GET ${pageUrl}`,
+      `HEAD ${imageUrl}`,
+      `HEAD ${faviconUrl}`,
+    ]);
+    expect(unexpectedRequests).toEqual([]);
+  });
+
+  it("renders cards from standard title, description, canonical, and favicon tags", async () => {
+    const pageUrl = "https://urlscan.io/";
+    const canonicalUrl = "https://urlscan.io/";
+    const faviconUrl = "https://urlscan.io/img/urlscan_256.png";
+    const { mf, unexpectedRequests } = createWorker({
+      [`GET ${pageUrl}`]: () =>
+        html(`
+          <html>
+            <head>
+              <title>URL and website scanner - urlscan.io</title>
+              <meta name="description" content="Website scanner for suspicious and malicious URLs">
+              <link rel="canonical" href="${canonicalUrl}">
+              <link rel="icon" type="image/png" href="/img/urlscan_256.png">
+            </head>
+          </html>
+        `),
+      [`HEAD ${faviconUrl}`]: okHead,
+    });
+
+    const response = await mf.dispatchFetch(embedUrl(pageUrl));
+    const body = await response.text();
+    const cache = await mf.getKVNamespace("OGP_CACHE");
+    const cached = await cache.get(pageUrl, "json");
+
+    expect(response.status).toBe(200);
+    expect(body).toContain("URL and website scanner - urlscan.io");
+    expect(body).toContain("Website scanner for suspicious and malicious URLs");
+    expect(body).toContain(canonicalUrl);
+    expect(cached).toMatchObject({
+      title: "URL and website scanner - urlscan.io",
+      description: "Website scanner for suspicious and malicious URLs",
+      url: canonicalUrl,
+      favicon: faviconUrl,
+    });
+    expect(unexpectedRequests).toEqual([]);
+  });
+
+  it("uses the Platesmania-specific User-Agent when fetching Platesmania pages", async () => {
+    const pageUrl = "https://platesmania.com/";
+    const faviconUrl = "https://platesmania.com/favicon.ico";
+    const { mf, requests, unexpectedRequests } = createWorker({
+      [`GET ${pageUrl}`]: () =>
+        html(`
+          <html>
+            <head>
+              <title>Photos of vehicles and license plates, Platespotting</title>
+              <meta name="description" content="Photos of vehicles and license plates, Platespotting">
+              <link rel="icon" href="/favicon.ico">
+            </head>
+          </html>
+        `),
+      [`HEAD ${faviconUrl}`]: okHead,
+    });
+
+    const response = await mf.dispatchFetch(embedUrl(pageUrl));
+    const body = await response.text();
+
+    expect(response.status).toBe(200);
+    expect(body).toContain("Photos of vehicles and license plates, Platespotting");
+    expect(body).toContain(pageUrl);
+    expect(requests.map(({ userAgent }) => userAgent)).toEqual([
+      UserAgentForWebsites.platesmania,
+      UserAgentForWebsites.platesmania,
+    ]);
+    expect(unexpectedRequests).toEqual([]);
+  });
+
+  it("uses Wikipedia summary API when a Wikipedia page has no description metadata", async () => {
+    const pageUrl =
+      "https://ja.wikipedia.org/wiki/%E9%86%A4%E6%B2%B9%E3%83%A9%E3%83%BC%E3%83%A1%E3%83%B3";
+    const summaryUrl =
+      "https://ja.wikipedia.org/api/rest_v1/page/summary/%E9%86%A4%E6%B2%B9%E3%83%A9%E3%83%BC%E3%83%A1%E3%83%B3";
+    const imageUrl = "https://upload.wikimedia.org/wikipedia/commons/thumb/shoyu.jpg";
+    const faviconUrl = "https://ja.wikipedia.org/static/favicon/wikipedia.ico";
+    const { mf, requests, unexpectedRequests } = createWorker({
+      [`GET ${pageUrl}`]: () =>
+        html(`
+          <html>
+            <head>
+              <meta property="og:title" content="醤油ラーメン - Wikipedia">
+              <meta property="og:image" content="${imageUrl}">
+              <meta property="og:type" content="website">
+              <link rel="canonical" href="${pageUrl}">
+              <link rel="icon" href="/static/favicon/wikipedia.ico">
+            </head>
+          </html>
+        `),
+      [`GET ${summaryUrl}`]: () =>
+        new Response(
+          JSON.stringify({
+            extract: "醤油ラーメンは、日本のラーメンの種類のひとつ。",
+            content_urls: {
+              desktop: {
+                page: pageUrl,
+              },
+            },
+          }),
+          {
+            headers: {
+              "content-type": "application/json; charset=utf-8",
+            },
+          },
+        ),
+      [`HEAD ${imageUrl}`]: okHead,
+      [`HEAD ${faviconUrl}`]: okHead,
+    });
+
+    const response = await mf.dispatchFetch(embedUrl(pageUrl));
+    const body = await response.text();
+
+    expect(response.status).toBe(200);
+    expect(body).toContain("醤油ラーメン - Wikipedia");
+    expect(body).toContain("醤油ラーメンは、日本のラーメンの種類のひとつ。");
+    expect(body).toContain(pageUrl);
+    expect(requests.map(({ method, url }) => `${method} ${url}`)).toEqual([
+      `GET ${pageUrl}`,
+      `GET ${summaryUrl}`,
       `HEAD ${imageUrl}`,
       `HEAD ${faviconUrl}`,
     ]);
@@ -219,6 +347,20 @@ describe("/embed", () => {
     expect(response.status).toBe(200);
     expect(body).toContain(`The URL ${imagePageUrl} points to an image, not a webpage.`);
     expect(body).toContain(`url=${imagePageUrl}`);
+    expect(unexpectedRequests).toEqual([]);
+  });
+
+  it("renders the target status when the target page rejects the fetch", async () => {
+    const pageUrl = "https://blocked.example/";
+    const { mf, unexpectedRequests } = createWorker({
+      [`GET ${pageUrl}`]: () => new Response("Forbidden", { status: 403, statusText: "Forbidden" }),
+    });
+
+    const response = await mf.dispatchFetch(embedUrl(pageUrl));
+    const body = await response.text();
+
+    expect(response.status).toBe(200);
+    expect(body).toContain(`Failed to fetch OGP data from ${pageUrl} (403 Forbidden)`);
     expect(unexpectedRequests).toEqual([]);
   });
 

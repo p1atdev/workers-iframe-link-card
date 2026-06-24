@@ -1,8 +1,9 @@
 export const UserAgentForWebsites = {
   youtube: "facebookexternalhit/1.1 (+http://www.facebook.com/externalhit_uatext.php)",
 };
-const yourubeHosts = [
+const youtubeHosts = [
   "youtube.com",
+  "www.youtube.com",
   "youtu.be",
   "m.youtube.com",
   "music.youtube.com",
@@ -10,7 +11,7 @@ const yourubeHosts = [
 ];
 
 export const getDynamicUserAgent = (host: string) => {
-  if (yourubeHosts.includes(host)) {
+  if (youtubeHosts.includes(host)) {
     return UserAgentForWebsites.youtube;
   }
 
